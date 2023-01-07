@@ -40,18 +40,17 @@ RetryOnFail passwd
 # Add user
 echo "Enter username please:"
 read username
-#groupadd "$username"
-#useradd -m -g "$username" -G wheel -s /bin/zsh "$username"
-useradd -m -G wheel -s /bin/zsh "$username"
+groupadd "$username"
+useradd -m -g "$username" -G wheel -s /bin/zsh "$username"
+#useradd -m -G wheel -s /bin/zsh "$username"
 
 # Set password for user
 echo "Enter password for "$username" please:"
-read pass
+read -s pass
 echo "$username":"$pass" | chpasswd
-#RetryOnFail passwd "$username"
 
 # Add user to wheel
-RetryOnFail visudo
+visudo
 
 # Configure mkinitcpio with modules needed for the initrd image
 sed -i 's|MODULES=()|MODULES=(ext4)|' /etc/mkinitcpio.conf
@@ -67,7 +66,7 @@ echo default arch-lts >> /boot/loader/loader.conf
 echo timeout 5 >> /boot/loader/loader.conf
 
 # Create arch.conf (or XYZ.conf for default XYZ in loader.conf)
-# get UUID of "sda2"
+# get UUID of "root"
 ROOT_UUID=$(blkid | grep "root" | grep -v vg0 | cut -d'"' -f2)
 cat <<EOT > /boot/loader/entries/arch-lts.conf
 title Arch Linux LTS
@@ -78,7 +77,7 @@ options cryptdevice=UUID="$ROOT_UUID":vg0 root=/dev/mapper/vg0-root rw
 EOT
 
 # Some optional stuff ----------------------------------------------------------
-# disable VT switch just in case
+# Disable VT switch
 mkdir /etc/X11/xorg.conf.d
 cat <<EOT > /etc/X11/xorg.conf.d/10-server.conf
 Section "ServerFlags"
@@ -87,17 +86,17 @@ Section "ServerFlags"
 EndSection
 EOT
 
-# rootless Xorg
+# Rootless Xorg
 cat <<EOT > /etc/X11/Xwrapper.config
 needs_root_rights = no
 EOT
 
-# enable multilb
+# Enable multilb
 sed -i "/\[multilib\]/,/Include/"'s/^#//' /etc/pacman.conf
 
-# reduce swappiness
-echo 'vm.swappiness=10' | tee /etc/sysctl.d/99-swappiness.conf
+# Reduce swappiness
+echo 'vm.swappiness=10' > /etc/sysctl.d/99-swappiness.conf
 
-# root
-#sed -i "s|root:/bin/bash|root:/usr/sbin/nologin|" /etc/passwd
-#passwd -l root
+# Lock root
+sed -i "s|root:/bin/bash|root:/usr/sbin/nologin|" /etc/passwd
+passwd -l root
