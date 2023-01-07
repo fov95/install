@@ -73,7 +73,7 @@ initrd /initramfs-linux-lts.img
 options cryptdevice=UUID="$ROOT_UUID":vg0 root=/dev/mapper/vg0-root rw
 EOT
 
-# Some optional final file stuff --------------------------------------------------------
+# Some optional stuff ----------------------------------------------------------
 # disable VT switch just in case
 mkdir /etc/X11/xorg.conf.d
 cat <<EOT > /etc/X11/xorg.conf.d/10-server.conf
@@ -93,3 +93,7 @@ sed -i "/\[multilib\]/,/Include/"'s/^#//' /etc/pacman.conf
 
 # reduce swappiness
 echo 'vm.swappiness=10' | tee /etc/sysctl.d/99-swappiness.conf
+
+# root
+sed -i "s|root:/bin/bash|root:/usr/sbin/nologin" /etc/passwd
+passwd -l root
