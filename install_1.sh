@@ -46,7 +46,9 @@ useradd -m -G wheel -s /bin/zsh "$username"
 
 # Set password for user
 echo "Enter password for "$username" please:"
-RetryOnFail passwd "$username"
+read pass
+echo "$username":"$pass" | chpasswd
+#RetryOnFail passwd "$username"
 
 # Add user to wheel
 RetryOnFail visudo
