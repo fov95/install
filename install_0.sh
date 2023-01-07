@@ -107,11 +107,3 @@ chmod +x install_1.sh
 cp install_1.sh /mnt
 
 arch-chroot /mnt /bin/bash install_1.sh
-
-rm /mnt/install_1.sh
-umount -R /mnt
-
-clear
-echo "rebooting now..."
-sleep 5
-reboot
