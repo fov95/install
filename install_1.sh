@@ -40,8 +40,9 @@ RetryOnFail passwd
 # Add user
 echo "Enter username please:"
 read username
-groupadd "$username"
-useradd -m -g "$username" -G wheel -s /bin/zsh "$username"
+#groupadd "$username"
+#useradd -m -g "$username" -G wheel -s /bin/zsh "$username"
+useradd -m -G wheel -s /bin/zsh "$username"
 
 # Set password for user
 echo "Enter password for "$username" please:"
@@ -96,5 +97,5 @@ sed -i "/\[multilib\]/,/Include/"'s/^#//' /etc/pacman.conf
 echo 'vm.swappiness=10' | tee /etc/sysctl.d/99-swappiness.conf
 
 # root
-sed -i "s|root:/bin/bash|root:/usr/sbin/nologin|" /etc/passwd
-passwd -l root
+#sed -i "s|root:/bin/bash|root:/usr/sbin/nologin|" /etc/passwd
+#passwd -l root
