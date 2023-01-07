@@ -40,6 +40,7 @@ RetryOnFail passwd
 # Add user
 echo "Enter username please:"
 read username
+groupadd "$username"
 useradd -m -g users -G wheel -s /bin/zsh "$username"
 
 # Set password for user
