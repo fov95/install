@@ -96,5 +96,5 @@ sed -i "/\[multilib\]/,/Include/"'s/^#//' /etc/pacman.conf
 echo 'vm.swappiness=10' | tee /etc/sysctl.d/99-swappiness.conf
 
 # root
-sed -i "s|root:/bin/bash|root:/usr/sbin/nologin|" /etc/passwd
-passwd -l root
+#sed -i "s|root:/bin/bash|root:/usr/sbin/nologin|" /etc/passwd
+#passwd -l root
