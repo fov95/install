@@ -99,7 +99,7 @@ sed -i "s|relatime|noatime,lazytime|g" /mnt/etc/fstab
 # Make /tmp a ramdisk (add the following line to /mnt/etc/fstab)
 echo "#tmpfs /tmp tmpfs defaults,noatime,lazytime,mode=1777 0 0" >> /mnt/etc/fstab
 # Add DATA partition
-#echo "/dev/disk/by-label/DATA /mnt/data auto nosuid,noatime,lazytime,nodev,nofail,x-gvfs-show 0 0" >> /mnt/etc/fstab
+echo "/dev/disk/by-label/DATA /mnt/data auto nosuid,noatime,lazytime,nodev,nofail,x-gvfs-show 0 0" >> /mnt/etc/fstab
 
 
 # moving to chroot and reboot when everything is done
