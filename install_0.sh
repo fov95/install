@@ -4,14 +4,14 @@
 loadkeys uk
 timedatectl set-ntp true
 
-# Create 2 partitions first and add them to the variables below (I'm using "cgdisk" for that)
-# For now name them boot & root - !!!todo
-# boot  512MB   FAT32
-# root  REST    EXT4
-#BOOT_PARTITION="sda1"
-#ROOT_PARTITION="sda2"
+# Todo: better methods
+# Create 2 partitions first and name them "boot" & "root" for now. (I'm using "cgdisk" for that)
+# boot  512MB   ef00
+# root  REST    8300 (default)
 
 # Functions --------------------------------------------------------------------
+
+# Select boot partition
 select_boot(){
   clear
   lsblk
@@ -26,6 +26,7 @@ select_boot(){
   esac
 }
 
+# Select root partition
 select_root(){
   clear
   lsblk
@@ -60,7 +61,11 @@ OpenPartition() {
  cryptsetup luksOpen /dev/$ROOT_PARTITION luks
 }
 # ------------------------------------------------------------------------------
+
+# Select boot partition
 select_boot
+
+# Select boot partition
 select_root
 
 # Create EFI partition
@@ -83,6 +88,7 @@ mount /dev/mapper/vg0-root /mnt
 mkdir /mnt/boot
 mount /dev/$BOOT_PARTITION /mnt/boot
 
+# Todo: zram maybe?
 # Create SWAP file
 dd if=/dev/zero of=/mnt/swap bs=1M count=1024
 mkswap /mnt/swap
@@ -90,16 +96,16 @@ swapon /mnt/swap
 chmod 0600 /mnt/swap
 
 # Install the system
-pacstrap /mnt base base-devel efibootmgr lvm2 linux-lts linux-firmware networkmanager sudo vi neovim man-db zsh zsh-completions intel-ucode git
+pacstrap /mnt base base-devel efibootmgr lvm2 linux-lts linux-firmware networkmanager sudo vi neovim man-db zsh intel-ucode git
 
 # Generate fstab
 genfstab -pU /mnt >> /mnt/etc/fstab
 # Relatime to noatime to decrease wear on SSD
-sed -i "s|relatime|noatime,lazytime|g" /mnt/etc/fstab
+sed -i "s|relatime|noatime,lazytime,commit=30|g" /mnt/etc/fstab
 # Make /tmp a ramdisk (add the following line to /mnt/etc/fstab)
-echo "#tmpfs /tmp tmpfs defaults,noatime,lazytime,mode=1777 0 0" >> /mnt/etc/fstab
+echo "#tmpfs /tmp tmpfs defaults,noatime,mode=1777 0 0" >> /mnt/etc/fstab
 # Add DATA partition
-echo "/dev/disk/by-label/DATA /mnt/data auto nosuid,noatime,lazytime,nodev,nofail,x-gvfs-show 0 0" >> /mnt/etc/fstab
+echo "/dev/disk/by-label/DATA /mnt/data auto nosuid,noatime,lazytime,commit=30,nodev,nofail,x-gvfs-show 0 0" >> /mnt/etc/fstab
 
 
 # moving to chroot and reboot when everything is done
