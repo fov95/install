@@ -221,3 +221,14 @@ passwd -l root
 
 export -f archchroot
 arch-chroot /mnt /bin/bash -c "archchroot" || echo "arch-chroot returned: $?"
+
+umount -R /mnt
+
+clear
+echo -e "All done! Do you wish to reboot (y/n)?"
+read choice
+case "$choice" in
+  y|Y ) reboot ;;
+  n|N ) :      ;;
+  * ) :        ;;
+esac
