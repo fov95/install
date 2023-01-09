@@ -215,8 +215,8 @@ sed -i "s|root:/bin/bash|root:/usr/sbin/nologin|" /etc/passwd
 passwd -l root
 }
 
-export -f archroot
-arch-chroot /mnt /bin/bash -c "archroot" || echo "arch-chroot returned: $?"
+export -f archchroot
+arch-chroot /mnt /bin/bash -c "archchroot" || echo "arch-chroot returned: $?"
 
 # moving to chroot
 #chmod +x install_1.sh
