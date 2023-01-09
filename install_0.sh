@@ -101,11 +101,11 @@ pacstrap /mnt base base-devel efibootmgr lvm2 linux-lts linux-firmware networkma
 # Generate fstab
 genfstab -pU /mnt >> /mnt/etc/fstab
 # Relatime to noatime to decrease wear on SSD
-sed -i "s|relatime|noatime,lazytime,commit=30|g" /mnt/etc/fstab
+sed -i "s|relatime|noatime,lazytime|g" /mnt/etc/fstab
 # Make /tmp a ramdisk (add the following line to /mnt/etc/fstab)
 echo "#tmpfs /tmp tmpfs defaults,noatime,mode=1777 0 0" >> /mnt/etc/fstab
 # Add DATA partition
-echo "/dev/disk/by-label/DATA /mnt/data auto nosuid,noatime,lazytime,commit=30,nodev,nofail,x-gvfs-show 0 0" >> /mnt/etc/fstab
+echo "/dev/disk/by-label/DATA /mnt/data auto nosuid,noatime,lazytime,nodev,nofail,x-gvfs-show 0 0" >> /mnt/etc/fstab
 
 
 # moving to chroot and reboot when everything is done
