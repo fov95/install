@@ -11,6 +11,7 @@ do
   $1
 done
 }
+# ------------------------------------------------------------------------------
 
 # Setup system clock
 ln -sf /usr/share/zoneinfo/Europe/Berlin /etc/localtime
@@ -65,7 +66,10 @@ bootctl --path=/boot install
 echo default arch-lts >> /boot/loader/loader.conf
 echo timeout 5 >> /boot/loader/loader.conf
 
-# Create arch.conf (or XYZ.conf for default XYZ in loader.conf)
+# Create arch-lts.conf (or XYZ.conf for default XYZ in loader.conf)
+# Options:  rw = needed because of 'fsck' hook
+#           quiet = silent boot
+#           nowatchdog = Not needed on desktop & consumes power for no reason
 # get UUID of "root"
 ROOT_UUID=$(blkid | grep "root" | grep -v vg0 | cut -d'"' -f2)
 cat <<EOT > /boot/loader/entries/arch-lts.conf
@@ -73,8 +77,9 @@ title Arch Linux LTS
 linux /vmlinuz-linux-lts
 initrd /intel-ucode.img
 initrd /initramfs-linux-lts.img
-options cryptdevice=UUID="$ROOT_UUID":vg0 root=/dev/mapper/vg0-root rw
+options cryptdevice=UUID="$ROOT_UUID":vg0 root=/dev/mapper/vg0-root rw quiet nowatchdog
 EOT
+#  vm.dirty_ratio = 15 vm.dirty_background_ratio = 10 vm.vfs_cache_pressure = 50
 
 # Some optional stuff ----------------------------------------------------------
 # Disable VT switch
