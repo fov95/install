@@ -102,7 +102,7 @@ pacstrap /mnt base base-devel efibootmgr lvm2 linux-lts linux-firmware networkma
 genfstab -pU /mnt >> /mnt/etc/fstab
 # Relatime to noatime to decrease wear on SSD
 sed -i "s|relatime|noatime,lazytime|g" /mnt/etc/fstab
-# Make /tmp a ramdisk (add the following line to /mnt/etc/fstab)
+# Make /tmp a ramdisk
 echo "#tmpfs /tmp tmpfs defaults,noatime,mode=1777 0 0" >> /mnt/etc/fstab
 # Add DATA partition
 echo "/dev/disk/by-label/DATA /mnt/data auto nosuid,noatime,lazytime,nodev,nofail,x-gvfs-show 0 0" >> /mnt/etc/fstab
@@ -141,7 +141,7 @@ echo "en_GB.UTF-8 UTF-8" >  /etc/locale.gen
 locale-gen
 echo -e "LANG=en_GB.UTF-8\nLC_COLLATE=C" > /etc/locale.conf
 echo "KEYMAP=uk" > /etc/vconsole.conf
-echo "FONT=lat9-16" >> /etc/vconsole.conf
+echo "FONT=default8x16" >> /etc/vconsole.conf
 
 # Set password for root
 clear
@@ -162,7 +162,7 @@ echo "Enter password for "$username" please:"
 read -s pass
 echo "$username":"$pass" | chpasswd
 
-# Add user to wheel
+# Uncomment wheel
 EDITOR=nvim visudo
 
 # Configure mkinitcpio with modules needed for the initrd image
@@ -210,6 +210,13 @@ EOT
 
 # Enable multilb
 sed -i "/\[multilib\]/,/Include/"'s/^#//' /etc/pacman.conf
+# Enable parallel downloads
+sed -i 's|#Parallel|Parallel|' /etc/pacman.conf
+# Enable "Pac-Man"
+sed -i '/ParallelDownloads/a ILoveCandy' /etc/pacman.conf
+# Enable color
+sed -i 's|#Color|Color|' /etc/pacman.conf
+
 
 # Reduce swappiness
 echo 'vm.swappiness=10' > /etc/sysctl.d/99-swappiness.conf
