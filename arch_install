@@ -44,7 +44,7 @@ select_root(){
 
 # Helper function. When there is an error, the function just makes it so that
 # the command repeats until there is no error anymore.
-RetryOnFail() {
+retry() {
   $1
 while [ $? -ne 0 ]
 do
@@ -73,8 +73,8 @@ select_root
 mkfs.vfat -F32 -n EFI /dev/$BOOT_PARTITION
 
 # Setup the encryption of the system
-RetryOnFail EncryptPartition
-RetryOnFail OpenPartition
+retry EncryptPartition
+retry OpenPartition
 
 # Create encrypted partitions
 pvcreate /dev/mapper/luks
@@ -113,7 +113,7 @@ archchroot() {
 # Functions --------------------------------------------------------------------
 # Helper function. When there is an error, the function just makes it so that
 # the command repeats until there is no error anymore.
-RetryOnFail() {
+retry() {
   $1
 while [ $? -ne 0 ]
 do
@@ -149,7 +149,7 @@ echo "FONT=default8x16" >> /etc/vconsole.conf
 # Set password for root
 clear
 echo "Enter root password please:"
-RetryOnFail passwd
+retry passwd
 
 # Add user
 clear
