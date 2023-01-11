@@ -3,6 +3,7 @@
 
 loadkeys uk
 timedatectl set-ntp true
+sed -i 's|#Parallel|Parallel|' /etc/pacman.conf
 
 # Todo: better methods
 # Create 2 partitions first and name them "boot" & "root" for now. (I'm using "cgdisk" for that)
@@ -105,7 +106,7 @@ sed -i "s|relatime|noatime,lazytime|g" /mnt/etc/fstab
 # Make /tmp a ramdisk
 echo "#tmpfs /tmp tmpfs defaults,noatime,mode=1777 0 0" >> /mnt/etc/fstab
 # Add DATA partition
-echo "/dev/disk/by-label/DATA /mnt/data auto nosuid,noatime,lazytime,nodev,nofail,x-gvfs-show 0 0" >> /mnt/etc/fstab
+echo "/dev/disk/by-label/backup /mnt/data auto nosuid,noatime,lazytime,nodev,nofail,x-gvfs-show 0 0" >> /mnt/etc/fstab
 
 
 archchroot() {
@@ -122,7 +123,9 @@ done
 # ------------------------------------------------------------------------------
 
 # Setup system clock
-ln -sf /usr/share/zoneinfo/Europe/Berlin /etc/localtime
+clear
+TIMEZONE="$(tzselect)"
+ln -sf /usr/share/zoneinfo/"$TIMEZONE" /etc/localtime
 hwclock --systohc
 
 # Set the hostname
@@ -216,7 +219,6 @@ sed -i 's|#Parallel|Parallel|' /etc/pacman.conf
 sed -i '/ParallelDownloads/a ILoveCandy' /etc/pacman.conf
 # Enable color
 sed -i 's|#Color|Color|' /etc/pacman.conf
-
 
 # Reduce swappiness
 echo 'vm.swappiness=10' > /etc/sysctl.d/99-swappiness.conf
