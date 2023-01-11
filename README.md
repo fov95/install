@@ -1,5 +1,5 @@
 # install
-my install scripts. I strictly advice against using them. I'm not responsible if you wipe your hard drives for good.
+My install scripts. I strictly advice against using them. I'm not responsible if you wipe your hard drives for good.
 
 If you want to use it anyway and just want a quick way to get an arch install on UEFI running, read first and make changes according to your needs.
 The only things you need to do manually (after creating a bootable USB and making sure to have a network connection of course) are:
