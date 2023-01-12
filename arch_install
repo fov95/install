@@ -1,5 +1,6 @@
 #!/bin/bash
 # vim:ft=sh
+# Todo: select/dialog/fzf?
 
 loadkeys uk
 timedatectl set-ntp true
@@ -106,7 +107,7 @@ sed -i "s|relatime|noatime,lazytime|g" /mnt/etc/fstab
 # Make /tmp a ramdisk
 echo "#tmpfs /tmp tmpfs defaults,noatime,mode=1777 0 0" >> /mnt/etc/fstab
 # Add DATA partition
-echo "/dev/disk/by-label/backup /mnt/data auto nosuid,noatime,lazytime,nodev,nofail,x-gvfs-show 0 0" >> /mnt/etc/fstab
+echo "/dev/disk/by-label/backup /mnt/data auto nosuid,noatime,nodev,nofail,x-gvfs-show 0 0" >> /mnt/etc/fstab
 
 
 archchroot() {
@@ -226,6 +227,15 @@ echo 'vm.swappiness=10' > /etc/sysctl.d/99-swappiness.conf
 # Lock root
 sed -i "s|root:/bin/bash|root:/usr/sbin/nologin|" /etc/passwd
 passwd -l root
+
+# Disable nm connectivity checks
+cat <<EOT > /etc/NetworkManager/conf.d/20-connectivity.conf
+[connectivity]
+enabled=false
+EOT
+
+# Remove journal files older than 1 week
+echo 'MaxRetentionSec=1week' >> /etc/systemd/journald.conf
 }
 
 export -f archchroot
