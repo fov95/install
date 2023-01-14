@@ -98,7 +98,7 @@ swapon /mnt/swap
 chmod 0600 /mnt/swap
 
 # Install the system
-pacstrap /mnt base base-devel efibootmgr lvm2 linux-lts linux-firmware networkmanager sudo neovim man-db zsh intel-ucode git
+pacstrap /mnt base base-devel efibootmgr lvm2 linux-lts linux-firmware networkmanager sudo neovim man-db zsh intel-ucode
 
 # Generate fstab
 genfstab -pU /mnt >> /mnt/etc/fstab
@@ -106,10 +106,10 @@ genfstab -pU /mnt >> /mnt/etc/fstab
 sed -i "s|relatime|noatime,lazytime|g" /mnt/etc/fstab
 # Make /tmp a ramdisk
 echo "#tmpfs /tmp tmpfs defaults,noatime,mode=1777 0 0" >> /mnt/etc/fstab
-# Add DATA partition
+# Add data partition
 echo "/dev/disk/by-label/backup /mnt/data auto nosuid,noatime,nodev,nofail,x-gvfs-show 0 0" >> /mnt/etc/fstab
 
-
+# Using a function for arch-chroot because I had issues with some commands
 archchroot() {
 # Functions --------------------------------------------------------------------
 # Helper function. When there is an error, the function just makes it so that
@@ -228,7 +228,7 @@ echo 'vm.swappiness=10' > /etc/sysctl.d/99-swappiness.conf
 sed -i "s|root:/bin/bash|root:/usr/sbin/nologin|" /etc/passwd
 passwd -l root
 
-# Disable nm connectivity checks
+# Disable nm connectivity checks - On a local machine it's just useless
 cat <<EOT > /etc/NetworkManager/conf.d/20-connectivity.conf
 [connectivity]
 enabled=false
