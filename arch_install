@@ -1,12 +1,14 @@
 #!/bin/bash
 # vim:ft=sh
-# Todo: select/dialog/fzf?
+# Todo: select/dialog/fzf? Switch to zram?
 
 loadkeys uk
 timedatectl set-ntp true
+
+#Life is short
 sed -i 's|#Parallel|Parallel|' /etc/pacman.conf
 
-# Todo: better methods
+# Todo: better method
 # Create 2 partitions first and name them "boot" & "root" for now. (I'm using "cgdisk" for that)
 # boot  512MB   ef00
 # root  REST    8300 (default)
@@ -90,20 +92,19 @@ mount /dev/mapper/vg0-root /mnt
 mkdir /mnt/boot
 mount /dev/$BOOT_PARTITION /mnt/boot
 
-# Todo: zram maybe?
 # Create SWAP file
 dd if=/dev/zero of=/mnt/swap bs=1M count=1024
 mkswap /mnt/swap
 swapon /mnt/swap
 chmod 0600 /mnt/swap
 
-# Install the system
+# Install base system
 pacstrap /mnt base base-devel efibootmgr lvm2 linux-lts linux-firmware networkmanager sudo neovim man-db zsh intel-ucode
 
 # Generate fstab
 genfstab -pU /mnt >> /mnt/etc/fstab
 # Relatime to noatime to decrease wear on SSD
-sed -i "s|relatime|noatime,lazytime|g" /mnt/etc/fstab
+sed -i "s|relatime|noatime|g" /mnt/etc/fstab
 # Make /tmp a ramdisk
 echo "#tmpfs /tmp tmpfs defaults,noatime,mode=1777 0 0" >> /mnt/etc/fstab
 # Add data partition
