@@ -168,7 +168,8 @@ read -s pass
 echo "$username":"$pass" | chpasswd
 
 # Uncomment wheel
-EDITOR=nvim visudo
+sed -i "s/# %wheel ALL=(ALL) ALL/%wheel ALL=(ALL) ALL/g" /etc/sudoers
+# EDITOR=nvim visudo
 
 # Configure mkinitcpio with modules needed for the initrd image
 sed -i 's|MODULES=()|MODULES=(ext4)|' /etc/mkinitcpio.conf
@@ -176,7 +177,7 @@ sed -i 's|block filesystems|block encrypt lvm2 filesystems|' /etc/mkinitcpio.con
 # Regenerate initrd image
 mkinitcpio -p linux-lts
 
-# Setup systembootd (grub will not work on nvme at this moment)
+# Setup systemd-boot (grub will not work on nvme at this moment)
 bootctl --path=/boot install
 
 # Create loader.conf
