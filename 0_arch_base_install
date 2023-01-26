@@ -108,7 +108,7 @@ sed -i "s|relatime|noatime|g" /mnt/etc/fstab
 # Make /tmp a ramdisk
 echo "#tmpfs /tmp tmpfs defaults,noatime,mode=1777 0 0" >> /mnt/etc/fstab
 # Add data partition
-echo "/dev/disk/by-label/DATA /mnt/data auto nosuid,noatime,nodev,nofail,x-gvfs-show 0 0" >> /mnt/etc/fstab
+echo "/dev/disk/by-label/backup /mnt/data auto nosuid,noatime,nodev,nofail,x-gvfs-show 0 0" >> /mnt/etc/fstab
 
 # Using a function for arch-chroot because I had issues with some commands
 archchroot() {
@@ -168,6 +168,7 @@ read -s pass
 echo "$username":"$pass" | chpasswd
 
 # Uncomment wheel
+# sed -i "s/# %wheel ALL=(ALL) ALL/%wheel ALL=(ALL) ALL/g" /etc/sudoers
 EDITOR=nvim visudo
 
 # Configure mkinitcpio with modules needed for the initrd image
