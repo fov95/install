@@ -26,7 +26,7 @@ select_boot(){
   case "$choice" in
     y|Y ) : ;;
     n|N ) select_boot ;;
-    * ) clear; echo -e "Invalid choice\n\nOnly y/n possible"; sleep 3; select_boot ;;
+    * ) clear; echo -e "Invalid choice\n\nOnly y/n possible"; sleep 2; select_boot ;;
   esac
 }
 
@@ -41,7 +41,7 @@ select_root(){
   case "$choice" in
     y|Y ) : ;;
     n|N ) select_root ;;
-    * ) clear; echo -e "Invalid choice\n\nOnly y/n possible"; sleep 3; select_root ;;
+    * ) clear; echo -e "Invalid choice\n\nOnly y/n possible"; sleep 2; select_root ;;
   esac
 }
 
@@ -149,9 +149,19 @@ echo "KEYMAP=uk" > /etc/vconsole.conf
 echo "FONT=default8x16" >> /etc/vconsole.conf
 
 # Set password for root
-clear
-echo "Enter root password please:"
-retry passwd
+enter_pass_root() {
+  clear
+  read -s -p "Enter root password: " pass
+  echo -e "\n"
+  read -s -p "Re-Enter root password: " pass2
+  if [ "$pass" != "$pass2" ]; then
+    clear
+    echo "Passwords don't match! Try again!"
+    sleep 2
+    enter_pass_root
+  fi
+}
+enter_pass_root
 
 # Add user
 clear
@@ -162,9 +172,19 @@ useradd -m -g "$username" -G wheel -s /bin/zsh "$username"
 #useradd -m -G wheel -s /bin/zsh "$username"
 
 # Set password for user
-clear
-echo "Enter password for "$username" please:"
-read -s pass
+enter_pass_user() {
+  clear
+  read -s -p "Enter password for "$username": " pass
+  echo -e "\n"
+  read -s -p "Re-Enter password for "$username": " pass2
+  if [ "$pass" != "$pass2" ]; then
+    clear
+    echo "Passwords don't match! Try again!"
+    sleep 2
+    enter_pass_user
+  fi
+}
+enter_pass_user
 echo "$username":"$pass" | chpasswd
 
 # Uncomment wheel
