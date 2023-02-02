@@ -149,19 +149,9 @@ echo "KEYMAP=uk" > /etc/vconsole.conf
 echo "FONT=default8x16" >> /etc/vconsole.conf
 
 # Set password for root
-enter_pass_root() {
-  clear
-  read -s -p "Enter root password: " pass
-  echo -e "\n"
-  read -s -p "Re-Enter root password: " pass2
-  if [ "$pass" != "$pass2" ]; then
-    clear
-    echo "Passwords don't match! Try again!"
-    sleep 2
-    enter_pass_root
-  fi
-}
-enter_pass_root
+clear
+echo "Enter root password please:"
+retry passwd
 
 # Add user
 clear
