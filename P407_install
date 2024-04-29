@@ -2,7 +2,7 @@
 # vim:ft=sh
 # Todo: select/dialog/fzf? Switch to zram?
 
-loadkeys uk
+loadkeys us
 timedatectl set-ntp true
 
 #Life is short
@@ -106,7 +106,7 @@ genfstab -pU /mnt >> /mnt/etc/fstab
 # Relatime to noatime to decrease wear on SSD
 sed -i "s|relatime|noatime|g" /mnt/etc/fstab
 # Make /tmp a ramdisk
-echo "#tmpfs /tmp tmpfs defaults,noatime,mode=1777 0 0" >> /mnt/etc/fstab
+echo "tmpfs /tmp tmpfs defaults,noatime,mode=1777 0 0" >> /mnt/etc/fstab
 # Add data partition
 echo "/dev/disk/by-label/backup /mnt/data auto nosuid,noatime,nodev,nofail,x-gvfs-show 0 0" >> /mnt/etc/fstab
 
@@ -142,10 +142,10 @@ cat <<EOT > /etc/hosts
 EOT
 
 # Generate locale
-echo "en_GB.UTF-8 UTF-8" >  /etc/locale.gen
+echo "en_US.UTF-8 UTF-8" >  /etc/locale.gen
 locale-gen
-echo -e "LANG=en_GB.UTF-8\nLC_COLLATE=C" > /etc/locale.conf
-echo "KEYMAP=uk" > /etc/vconsole.conf
+echo -e "LANG=en_US.UTF-8\nLC_COLLATE=C" > /etc/locale.conf
+echo "KEYMAP=us" > /etc/vconsole.conf
 echo "FONT=default8x16" >> /etc/vconsole.conf
 
 # Set password for root
