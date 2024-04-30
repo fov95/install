@@ -1,0 +1,256 @@
+#!/bin/bash
+# vim:ft=sh
+# Todo: select/dialog/fzf? Switch to zram?
+
+loadkeys us
+timedatectl set-ntp true
+
+#Life is short
+sed -i 's|#Parallel|Parallel|' /etc/pacman.conf
+
+# Todo: better method
+# Create 2 partitions first and name them "boot" & "root" for now. (I'm using "cgdisk" for that)
+# boot  512MB   ef00
+# root  REST    8300 (default)
+
+# Functions --------------------------------------------------------------------
+
+# Select boot partition
+select_boot(){
+  clear
+  lsblk
+  echo -e "\nPlease select boot partiton ( like 'sda1' or 'sdb1' )"
+  read BOOT_PARTITION
+  echo "You selected '$BOOT_PARTITION'"
+
+  read -p "Are you sure (y/n)?" choice
+  case "$choice" in
+    y|Y ) : ;;
+    n|N ) select_boot ;;
+    * ) clear; echo -e "Invalid choice\n\nOnly 'y' or 'n' possible"; sleep 2; select_boot ;;
+  esac
+}
+
+# Select root partition
+select_root(){
+  clear
+  lsblk
+  echo -e "\nPlease select root partiton ( like 'sda2' or 'sdb2' )"
+  read ROOT_PARTITION
+  echo "You selected '$ROOT_PARTITION'"
+
+  read -p "Are you sure (y/n)?" choice
+  case "$choice" in
+    y|Y ) : ;;
+    n|N ) select_root ;;
+    * ) clear; echo -e "Invalid choice\n\nOnly 'y' or 'n' possible"; sleep 2; select_root ;;
+  esac
+}
+
+# Helper function. When there is an error, the function just makes it so that
+# the command repeats until there is no error anymore.
+retry() {
+  $1
+while [ $? -ne 0 ]
+do
+  $1
+done
+}
+
+# Encrypt function
+EncryptPartition() {
+  cryptsetup luksFormat -v -s 512 -h sha512 /dev/$ROOT_PARTITION
+}
+
+# Open function
+OpenPartition() {
+ cryptsetup luksOpen /dev/$ROOT_PARTITION luks
+}
+# ------------------------------------------------------------------------------
+
+# Select boot partition
+select_boot
+
+# Select boot partition
+select_root
+
+# Create EFI partition
+mkfs.vfat -F32 -n EFI /dev/$BOOT_PARTITION
+
+# Setup the encryption of the system
+retry EncryptPartition
+retry OpenPartition
+
+# Create encrypted partitions
+pvcreate /dev/mapper/luks
+vgcreate vg0 /dev/mapper/luks
+lvcreate -l +100%FREE vg0 --name root
+
+# Create filesystems on encrypted partitions
+mkfs.ext4 -L root /dev/mapper/vg0-root
+
+# Mount the new system
+mount /dev/mapper/vg0-root /mnt
+mkdir /mnt/boot
+mount /dev/$BOOT_PARTITION /mnt/boot
+
+# Create SWAP file
+dd if=/dev/zero of=/mnt/swap bs=1M count=1024
+mkswap /mnt/swap
+swapon /mnt/swap
+chmod 0600 /mnt/swap
+
+# Install base system
+pacstrap /mnt base base-devel efibootmgr lvm2 linux-lts linux-firmware networkmanager sudo neovim man-db zsh intel-ucode
+
+# Generate fstab
+genfstab -pU /mnt >> /mnt/etc/fstab
+# Relatime to noatime to decrease wear on SSD
+sed -i "s|relatime|noatime|g" /mnt/etc/fstab
+# Make /tmp a ramdisk
+echo "tmpfs /tmp tmpfs defaults,noatime,mode=1777 0 0" >> /mnt/etc/fstab
+# Add data partition
+echo "/dev/disk/by-label/backup /mnt/data auto nosuid,noatime,nodev,nofail,x-gvfs-show 0 0" >> /mnt/etc/fstab
+
+# Using a function for arch-chroot because I had issues with some commands
+archchroot() {
+# Functions --------------------------------------------------------------------
+# Helper function. When there is an error, the function just makes it so that
+# the command repeats until there is no error anymore.
+retry() {
+  $1
+while [ $? -ne 0 ]
+do
+  $1
+done
+}
+# ------------------------------------------------------------------------------
+
+# Setup system clock
+clear
+TIMEZONE="$(tzselect)"
+ln -sf /usr/share/zoneinfo/"$TIMEZONE" /etc/localtime
+hwclock --systohc
+
+# Set the hostname
+clear
+echo "Enter hostname please:"
+read hostname
+echo "$hostname" > /etc/hostname
+cat <<EOT > /etc/hosts
+127.0.0.1 localhost
+::1 localhost
+127.0.1.1 "$hostname".localdomain "$hostname"
+EOT
+
+# Generate locale
+echo "en_US.UTF-8 UTF-8" >  /etc/locale.gen
+locale-gen
+echo -e "LANG=en_US.UTF-8\nLC_COLLATE=C" > /etc/locale.conf
+echo "KEYMAP=us" > /etc/vconsole.conf
+echo "FONT=default8x16" >> /etc/vconsole.conf
+
+# Set password for root
+clear
+echo "Enter root password please:"
+retry passwd
+
+# Add user
+clear
+echo "Enter username please:"
+read username
+groupadd "$username"
+useradd -m -g "$username" -G wheel -s /bin/zsh "$username"
+#useradd -m -G wheel -s /bin/zsh "$username"
+
+# Set password for user
+enter_pass_user() {
+  clear
+  read -s -p "Enter password for "$username": " pass
+  echo -e "\n"
+  read -s -p "Re-Enter password for "$username": " pass2
+  if [ "$pass" != "$pass2" ]; then
+    clear
+    echo "Passwords don't match! Try again!"
+    sleep 2
+    enter_pass_user
+  fi
+}
+enter_pass_user
+echo "$username":"$pass" | chpasswd
+
+# Uncomment wheel
+# sed -i "s/# %wheel ALL=(ALL) ALL/%wheel ALL=(ALL) ALL/g" /etc/sudoers
+EDITOR=nvim visudo
+
+# Configure mkinitcpio with modules needed for the initrd image
+sed -i 's|MODULES=()|MODULES=(ext4)|' /etc/mkinitcpio.conf
+sed -i 's|block filesystems|block encrypt lvm2 filesystems|' /etc/mkinitcpio.conf
+# Regenerate initrd image
+mkinitcpio -p linux-lts
+
+# Setup systemd-boot (grub will not work on nvme at this moment)
+bootctl --path=/boot install
+
+# Create loader.conf
+echo default arch-lts >> /boot/loader/loader.conf
+echo timeout 5 >> /boot/loader/loader.conf
+
+# Create arch-lts.conf (or XYZ.conf for default XYZ in loader.conf)
+# Options:  rw = needed because of 'fsck' hook
+#           quiet = silent boot
+#           nowatchdog = Not needed on desktop & consumes power for no reason
+# get UUID of "root"
+ROOT_UUID=$(blkid | grep "root" | grep -v vg0 | cut -d'"' -f2)
+cat <<EOT > /boot/loader/entries/arch-lts.conf
+title Arch Linux LTS
+linux /vmlinuz-linux-lts
+initrd /intel-ucode.img
+initrd /initramfs-linux-lts.img
+options cryptdevice=UUID="$ROOT_UUID":vg0 root=/dev/mapper/vg0-root rw quiet nowatchdog
+EOT
+#  vm.dirty_ratio = 15 vm.dirty_background_ratio = 10 vm.vfs_cache_pressure = 50
+
+# Some optional stuff ----------------------------------------------------------
+# Disable VT switch
+mkdir /etc/X11/xorg.conf.d
+cat <<EOT > /etc/X11/xorg.conf.d/10-server.conf
+Section "ServerFlags"
+        Option "DontVTSwitch" "True"
+        Option "DontZap"      "True"
+EndSection
+EOT
+
+# Rootless Xorg
+cat <<EOT > /etc/X11/Xwrapper.config
+needs_root_rights = no
+EOT
+
+# Enable multilb
+sed -i "/\[multilib\]/,/Include/"'s/^#//' /etc/pacman.conf
+# Enable parallel downloads
+sed -i 's|#Parallel|Parallel|' /etc/pacman.conf
+# Enable "Pac-Man"
+sed -i '/ParallelDownloads/a ILoveCandy' /etc/pacman.conf
+# Enable color
+sed -i 's|#Color|Color|' /etc/pacman.conf
+
+# Reduce swappiness
+echo 'vm.swappiness=10' > /etc/sysctl.d/99-swappiness.conf
+
+# Lock root
+sed -i "s|root:/bin/bash|root:/usr/sbin/nologin|" /etc/passwd
+passwd -l root
+
+# Disable nm connectivity checks - On a local machine it's just useless
+cat <<EOT > /etc/NetworkManager/conf.d/20-connectivity.conf
+[connectivity]
+enabled=false
+EOT
+
+# Remove journal files older than 1 week
+echo 'MaxRetentionSec=1week' >> /etc/systemd/journald.conf
+}
+
+export -f archchroot
+arch-chroot /mnt /bin/bash -c "archchroot" || echo "arch-chroot returned: $?"
